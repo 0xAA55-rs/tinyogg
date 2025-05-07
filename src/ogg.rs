@@ -196,7 +196,7 @@ impl OggPacket {
 					segment_table: segment_table.to_vec(),
 					data: ogg_packet[data_start..*packet_length].to_vec(),
 				};
-				let checksum = Self::get_checksum(ogg_packet)?;
+				let checksum = Self::get_checksum(&ogg_packet[..*packet_length])?;
 				if ret.checksum != checksum {
 					Err(io::Error::new(ErrorKind::InvalidData, format!("Ogg packet checksum not match: should be 0x{:x}, got 0x{:x}", checksum, ret.checksum)))
 				} else {
