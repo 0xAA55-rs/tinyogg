@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::io::{self, ErrorKind};
+use std::{io::{self, Write, ErrorKind}, mem};
 
 #[derive(Debug, Clone, Copy)]
 pub enum OggPacketType {
@@ -226,3 +226,69 @@ impl Default for OggPacket {
 		}
 	}
 }
+
+/// ## An ogg packet as a stream container
+#[derive(Debug, Clone)]
+pub struct OggStreamWriter<W>
+where
+	W: Write {
+	writer: W,
+	stream_id: u32,
+	packet_index: u32,
+	cur_packet: OggPacket,
+	pub granule_position: u64,
+}
+
+impl<W> OggStreamWriter<W>
+where
+	W: Write {
+	pub fn new(writer: W, stream_id: u32) -> Self {
+		Self {
+			writer,
+			stream_id,
+			packet_index : 0,
+			cur_packet: OggPacket::new(stream_id, OggPacketType::BeginOfStream, 0),
+			granule_position: 0,
+		}
+	}
+
+	pub fn set_granule_position(&mut self, position: u64) {
+		self.granule_position = position
+	}
+
+	pub fn get_granule_position(&self) -> u64 {
+		self.granule_position
+	}
+}
+
+impl<W> Write for OggStreamWriter<W>
+where
+	W: Write {
+	fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
+		let mut written = self.cur_packet.write(buf);
+		if written == 0 {
+			self.flush()?;
+			written = self.cur_packet.write(buf);
+		}
+		Ok(written)
+	}
+
+	fn flush(&mut self) -> Result<(), io::Error> {
+		self.packet_index += 1;
+		self.cur_packet.granule_position = self.granule_position;
+		let packed = mem::replace(&mut self.cur_packet, OggPacket::new(self.stream_id, OggPacketType::Continuation, self.packet_index)).to_bytes();
+		self.writer.write_all(&packed)?;
+		Ok(())
+	}
+}
+
+impl<W> Drop for OggStreamWriter<W>
+where
+	W: Write {
+	fn drop(&mut self) {
+		self.cur_packet.packet_type = OggPacketType::EndOfStream;
+		self.cur_packet.granule_position = self.granule_position;
+		self.writer.write_all(&mem::take(&mut self.cur_packet).to_bytes()).unwrap();
+	}
+}
+
