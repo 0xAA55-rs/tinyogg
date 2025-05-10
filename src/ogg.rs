@@ -166,7 +166,7 @@ impl OggPacket {
 	/// Deserialize the packet
 	pub fn from_bytes(ogg_packet: &[u8], packet_length: &mut usize) -> Result<Self, io::Error> {
 		if ogg_packet.len() < 27 {
-			Err(io::Error::new(ErrorKind::InvalidData, format!("The given ogg page size is too small: {} < 27", ogg_packet.len())))
+			Err(io::Error::new(ErrorKind::UnexpectedEof, format!("The given ogg page size is too small: {} < 27", ogg_packet.len())))
 		} else if ogg_packet[0..4] != *b"OggS" {
 			Err(io::Error::new(ErrorKind::InvalidData, format!("While parsing Ogg packet: expected `OggS`, got `{}`", String::from_utf8_lossy(&ogg_packet[0..4]).to_string())))
 		} else if ogg_packet[4] != 0 {
@@ -184,7 +184,7 @@ impl OggPacket {
 			let data_length: usize = segment_table.iter().map(|&s|s as usize).sum();
 			*packet_length = data_start + data_length;
 			if ogg_packet.len() < *packet_length {
-				Err(io::Error::new(ErrorKind::InvalidData, format!("The given ogg page size is too small: {} < {packet_length}", ogg_packet.len())))
+				Err(io::Error::new(ErrorKind::UnexpectedEof, format!("The given ogg page size is too small: {} < {packet_length}", ogg_packet.len())))
 			} else {
 				let ret = Self{
 					version: 0,
