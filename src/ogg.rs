@@ -101,6 +101,11 @@ impl OggPacket {
 		ret
 	}
 
+	/// Read all of the data as a flattened `Vec<u8>`
+	pub fn get_inner_data(&self) -> Vec<u8> {
+		self.get_segments().into_iter().flatten().collect()
+	}
+
 	/// Calculate the checksum
 	pub fn crc(mut crc: u32, data: &[u8]) -> u32 {
         type CrcTableType = [u32; 256];
