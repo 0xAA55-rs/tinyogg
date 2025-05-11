@@ -276,10 +276,10 @@ impl Default for OggPacket {
 pub struct OggStreamWriter<W>
 where
 	W: Write {
-	writer: W,
-	stream_id: u32,
-	packet_index: u32,
-	cur_packet: OggPacket,
+	pub writer: W,
+	pub stream_id: u32,
+	pub packet_index: u32,
+	pub cur_packet: OggPacket,
 	pub granule_position: u64,
 }
 
@@ -302,6 +302,16 @@ where
 
 	pub fn get_granule_position(&self) -> u64 {
 		self.granule_position
+	}
+
+	pub fn set_to_end_of_stream(&mut self) {
+		self.cur_packet.packet_type = OggPacketType::EndOfStream;
+	}
+
+	pub fn reset(&mut self) {
+		self.packet_index = 0;
+		self.cur_packet = OggPacket::new(self.stream_id, OggPacketType::BeginOfStream, 0);
+		self.granule_position = 0;
 	}
 }
 
