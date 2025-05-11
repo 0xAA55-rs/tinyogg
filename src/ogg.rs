@@ -354,9 +354,7 @@ impl<W> Drop for OggStreamWriter<W>
 where
 	W: Write {
 	fn drop(&mut self) {
-		self.cur_packet.packet_type = OggPacketType::EndOfStream;
-		self.cur_packet.granule_position = self.granule_position;
-		self.writer.write_all(&mem::take(&mut self.cur_packet).to_bytes()).unwrap();
+		self.seal_packet(self.granule_position, true).unwrap();
 	}
 }
 
