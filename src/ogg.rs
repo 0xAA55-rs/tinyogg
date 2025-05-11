@@ -151,7 +151,7 @@ impl OggPacket {
 	}
 
 	/// Serialize the packet to bytes. Only in the bytes form can calculate the checksum.
-	pub fn to_bytes(self) -> Vec<u8> {
+	pub fn into_bytes(self) -> Vec<u8> {
 		let mut ret: Vec<u8> = [
 			b"OggS" as &[u8],
 			&[self.version],
@@ -320,9 +320,9 @@ where
 		self.cur_packet.granule_position = self.granule_position;
 		let packed = if is_end_of_stream {
 			self.cur_packet.packet_type = OggPacketType::EndOfStream;
-			mem::take(&mut self.cur_packet).to_bytes()
+			mem::take(&mut self.cur_packet).into_bytes()
 		} else {
-			mem::replace(&mut self.cur_packet, OggPacket::new(self.stream_id, OggPacketType::Continuation, self.packet_index)).to_bytes()
+			mem::replace(&mut self.cur_packet, OggPacket::new(self.stream_id, OggPacketType::Continuation, self.packet_index)).into_bytes()
 		};
 		self.writer.write_all(&packed)?;
 		Ok(())
