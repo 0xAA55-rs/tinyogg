@@ -173,7 +173,7 @@ impl OggPacket {
 		if ogg_packet.len() < 27 {
 			Err(io::Error::new(ErrorKind::UnexpectedEof, format!("The given ogg page size is too small: {} < 27", ogg_packet.len())))
 		} else if ogg_packet[0..4] != *b"OggS" {
-			Err(io::Error::new(ErrorKind::InvalidData, format!("While parsing Ogg packet: expected `OggS`, got `{}`", String::from_utf8_lossy(&ogg_packet[0..4]).to_string())))
+			Err(io::Error::new(ErrorKind::InvalidData, format!("While parsing Ogg packet: expected `OggS`, got `{}`", String::from_utf8_lossy(&ogg_packet[0..4]))))
 		} else if ogg_packet[4] != 0 {
 			Err(io::Error::new(ErrorKind::InvalidData, format!("While parsing Ogg packet: invalid `version` = {} (should be zero)", ogg_packet[4])))
 		} else {
@@ -194,7 +194,7 @@ impl OggPacket {
 		if ogg_packet.len() < 27 {
 			Err(io::Error::new(ErrorKind::UnexpectedEof, format!("The given ogg page size is too small: {} < 27", ogg_packet.len())))
 		} else if ogg_packet[0..4] != *b"OggS" {
-			Err(io::Error::new(ErrorKind::InvalidData, format!("While parsing Ogg packet: expected `OggS`, got `{}`", String::from_utf8_lossy(&ogg_packet[0..4]).to_string())))
+			Err(io::Error::new(ErrorKind::InvalidData, format!("While parsing Ogg packet: expected `OggS`, got `{}`", String::from_utf8_lossy(&ogg_packet[0..4]))))
 		} else if ogg_packet[4] != 0 {
 			Err(io::Error::new(ErrorKind::InvalidData, format!("While parsing Ogg packet: invalid `version` = {} (should be zero)", ogg_packet[4])))
 		} else {
