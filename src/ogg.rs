@@ -9,7 +9,7 @@ pub enum OggPacketType {
 	EndOfStream = 4,
 }
 
-/// ## An ogg packet as a stream container
+/// * An ogg packet as a stream container
 #[derive(Debug, Clone)]
 pub struct OggPacket {
 	/// Ogg Version must be zero
@@ -271,7 +271,7 @@ impl Default for OggPacket {
 	}
 }
 
-/// ## An ogg packet as a stream container
+/// * An ogg packet as a stream container
 #[derive(Debug, Clone)]
 pub struct OggStreamWriter<W>
 where
