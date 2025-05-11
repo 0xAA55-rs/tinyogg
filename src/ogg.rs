@@ -112,6 +112,7 @@ impl OggPacket {
         fn ogg_generate_crc_table() -> CrcTableType {
             use std::mem::MaybeUninit;
             #[allow(invalid_value)]
+            #[allow(clippy::uninit_assumed_init)]
             let mut crc_lookup: CrcTableType = unsafe{MaybeUninit::uninit().assume_init()};
             (0..256).for_each(|i|{
                 let mut r: u32 = i << 24;
