@@ -332,13 +332,18 @@ where
 impl<W> Write for OggStreamWriter<W>
 where
 	W: Write {
-	fn write(&mut self, buf: &[u8]) -> Result<usize, io::Error> {
-		let mut written = self.cur_packet.write(buf);
-		if written == 0 {
-			self.flush()?;
-			written = self.cur_packet.write(buf);
+	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+		let mut buf = buf;
+		let mut written_total = 0usize;
+		while !buf.is_empty() {
+			let written = self.cur_packet.write(buf);
+			buf = &buf[written..];
+			written_total += written;
+			if buf.len() > 0 {
+				self.seal_packet(self.granule_position, false)?;
+			}
 		}
-		Ok(written)
+		Ok(written_total)
 	}
 
 	fn flush(&mut self) -> io::Result<()> {
