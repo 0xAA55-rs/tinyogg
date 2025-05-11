@@ -148,7 +148,8 @@ impl OggPacket {
 	/// Set the checksum for the Ogg packet
 	pub fn fill_checksum_field(ogg_packet: &mut [u8]) -> io::Result<()> {
 		let checksum = Self::get_checksum(ogg_packet)?;
-		Ok(ogg_packet[22..26].copy_from_slice(&checksum.to_le_bytes()))
+		ogg_packet[22..26].copy_from_slice(&checksum.to_le_bytes());
+		Ok(())
 	}
 
 	/// Serialize the packet to bytes. Only in the bytes form can calculate the checksum.
