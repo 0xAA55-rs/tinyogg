@@ -126,7 +126,7 @@ impl OggPacket {
 
         use std::sync::OnceLock;
         static OGG_CRC_TABLE: OnceLock<CrcTableType> = OnceLock::<CrcTableType>::new();
-        let crc_lookup = OGG_CRC_TABLE.get_or_init(|| ogg_generate_crc_table());
+        let crc_lookup = OGG_CRC_TABLE.get_or_init(ogg_generate_crc_table);
 
         for b in data {
             crc = (crc << 8) ^ crc_lookup[(*b as u32 ^ (crc >> 24)) as usize];
