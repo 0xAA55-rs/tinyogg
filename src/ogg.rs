@@ -145,7 +145,7 @@ impl OggPacket {
 	}
 
 	/// Set the checksum for the Ogg packet
-	pub fn fill_checksum_field(ogg_packet: &mut [u8]) -> Result<(), io::Error> {
+	pub fn fill_checksum_field(ogg_packet: &mut [u8]) -> io::Result<()> {
 		let checksum = Self::get_checksum(ogg_packet)?;
 		Ok(ogg_packet[22..26].copy_from_slice(&checksum.to_le_bytes()))
 	}
@@ -169,7 +169,7 @@ impl OggPacket {
 	}
 
 	/// Retrieve the packet length in bytes
-	pub fn get_length(ogg_packet: &[u8]) -> Result<usize, io::Error> {
+	pub fn get_length(ogg_packet: &[u8]) -> io::Result<usize> {
 		if ogg_packet.len() < 27 {
 			Err(io::Error::new(ErrorKind::UnexpectedEof, format!("The given ogg page size is too small: {} < 27", ogg_packet.len())))
 		} else if ogg_packet[0..4] != *b"OggS" {
