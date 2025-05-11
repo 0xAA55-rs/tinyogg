@@ -80,7 +80,7 @@ impl OggPacket {
 				break;
 			}
 		}
-		return written;
+		written
 	}
 
 	/// Clear all data inside the packet
@@ -235,21 +235,16 @@ impl OggPacket {
 
 	/// Deserialize to multiple packets
 	pub fn from_cursor(cursor: &mut Cursor<Vec<u8>>) -> Vec<OggPacket> {
-		let mut data: &[u8] = &*cursor.get_ref();
+		let mut data: &[u8] = cursor.get_ref();
 		let mut packet_length = 0usize;
 		let mut bytes_read = 0usize;
 		let mut ret = Vec::<OggPacket>::new();
-		loop {
-			match Self::from_bytes(&data, &mut packet_length) {
-				Ok(packet) => {
-					bytes_read += packet_length;
-					ret.push(packet);
-					data = &data[packet_length..];
-					if data.is_empty() {
-						break;
-					}
-				}
-				Err(_) => break,
+		while let Ok(packet) = Self::from_bytes(data, &mut packet_length) {
+			bytes_read += packet_length;
+			ret.push(packet);
+			data = &data[packet_length..];
+			if data.is_empty() {
+				break;
 			}
 		}
 		cursor.set_position(bytes_read as u64);
@@ -340,7 +335,7 @@ where
 			let written = self.cur_packet.write(buf);
 			buf = &buf[written..];
 			written_total += written;
-			if buf.len() > 0 {
+			if !buf.is_empty() {
 				self.seal_packet(self.granule_position, false)?;
 			}
 		}
