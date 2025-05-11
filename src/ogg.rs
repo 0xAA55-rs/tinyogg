@@ -315,6 +315,7 @@ where
 	}
 
 	pub fn seal_packet(&mut self, granule_position: u64, is_end_of_stream: bool) -> io::Result<()> {
+		self.packet_index += 1;
 		self.granule_position = granule_position;
 		self.cur_packet.granule_position = self.granule_position;
 		let packed = if is_end_of_stream {
@@ -324,7 +325,6 @@ where
 			mem::replace(&mut self.cur_packet, OggPacket::new(self.stream_id, OggPacketType::Continuation, self.packet_index)).to_bytes()
 		};
 		self.writer.write_all(&packed)?;
-		self.packet_index += 1;
 		Ok(())
 	}
 }
