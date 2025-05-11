@@ -341,12 +341,8 @@ where
 		Ok(written)
 	}
 
-	fn flush(&mut self) -> Result<(), io::Error> {
-		self.packet_index += 1;
-		self.cur_packet.granule_position = self.granule_position;
-		let packed = mem::replace(&mut self.cur_packet, OggPacket::new(self.stream_id, OggPacketType::Continuation, self.packet_index)).to_bytes();
-		self.writer.write_all(&packed)?;
-		Ok(())
+	fn flush(&mut self) -> io::Result<()> {
+		self.writer.flush()
 	}
 }
 
