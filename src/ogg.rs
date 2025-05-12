@@ -283,6 +283,7 @@ where
 	pub packet_index: u32,
 	pub cur_packet: OggPacket,
 	pub granule_position: u64,
+	pub bytes_written: u64,
 }
 
 impl<W> OggStreamWriter<W>
@@ -295,6 +296,7 @@ where
 			packet_index : 0,
 			cur_packet: OggPacket::new(stream_id, OggPacketType::BeginOfStream, 0),
 			granule_position: 0,
+			bytes_written: 0,
 		}
 	}
 
@@ -310,10 +312,15 @@ where
 		self.cur_packet.packet_type = OggPacketType::EndOfStream;
 	}
 
+	pub fn get_bytes_written(&self) -> u64 {
+		self.bytes_written
+	}
+
 	pub fn reset(&mut self) {
 		self.packet_index = 0;
 		self.cur_packet = OggPacket::new(self.stream_id, OggPacketType::BeginOfStream, 0);
 		self.granule_position = 0;
+		self.bytes_written = 0;
 	}
 
 	pub fn seal_packet(&mut self, granule_position: u64, is_end_of_stream: bool) -> io::Result<()> {
@@ -335,6 +342,7 @@ impl<W> Write for OggStreamWriter<W>
 where
 	W: Write {
 	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+		self.bytes_written = buf.len() as u64;
 		let mut buf = buf;
 		let mut written_total = 0usize;
 		while !buf.is_empty() {
