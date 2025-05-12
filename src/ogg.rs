@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{io::{self, Cursor, Write, ErrorKind}, mem};
+use std::{io::{self, Cursor, Write, ErrorKind}, mem, fmt::{self, Debug, Formatter}};
 
 #[derive(Debug, Clone, Copy)]
 pub enum OggPacketType {
@@ -274,10 +274,9 @@ impl Default for OggPacket {
 }
 
 /// * An ogg packet as a stream container
-#[derive(Debug, Clone)]
 pub struct OggStreamWriter<W>
 where
-	W: Write {
+	W: Write + Debug {
 	pub writer: W,
 	pub stream_id: u32,
 	pub packet_index: u32,
@@ -289,7 +288,7 @@ where
 
 impl<W> OggStreamWriter<W>
 where
-	W: Write {
+	W: Write + Debug {
 	pub fn new(writer: W, stream_id: u32) -> Self {
 		Self {
 			writer,
@@ -298,6 +297,7 @@ where
 			cur_packet: OggPacket::new(stream_id, OggPacketType::BeginOfStream, 0),
 			granule_position: 0,
 			bytes_written: 0,
+			on_seal: Box::new(|i|i as u64),
 		}
 	}
 
@@ -315,6 +315,10 @@ where
 
 	pub fn get_bytes_written(&self) -> u64 {
 		self.bytes_written
+	}
+
+	pub fn set_on_seal_callback(&mut self, on_seal: Box<dyn FnMut(usize) -> u64>) {
+		self.on_seal = on_seal;
 	}
 
 	pub fn reset(&mut self) {
@@ -341,7 +345,7 @@ where
 
 impl<W> Write for OggStreamWriter<W>
 where
-	W: Write {
+	W: Write + Debug {
 	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
 		self.bytes_written = buf.len() as u64;
 		let mut buf = buf;
@@ -363,9 +367,25 @@ where
 	}
 }
 
+impl<W> Debug for OggStreamWriter<W>
+where
+	W: Write + Debug {
+	fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+		f.debug_struct(&format!("OggStreamWriter<{}>", std::any::type_name::<W>()))
+		.field("writer", &self.writer)
+		.field("stream_id", &format_args!("0x{:08x}", self.stream_id))
+		.field("packet_index", &self.packet_index)
+		.field("cur_packet", &self.cur_packet)
+		.field("granule_position", &self.granule_position)
+		.field("on_seal", &format_args!("<closure>"))
+		.field("bytes_written", &self.bytes_written)
+		.finish()
+	}
+}
+
 impl<W> Drop for OggStreamWriter<W>
 where
-	W: Write {
+	W: Write + Debug {
 	fn drop(&mut self) {
 		self.seal_packet(self.granule_position, true).unwrap();
 	}
