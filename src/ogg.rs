@@ -283,6 +283,7 @@ where
 	pub packet_index: u32,
 	pub cur_packet: OggPacket,
 	pub granule_position: u64,
+	pub on_seal: Box<dyn FnMut(usize) -> u64>,
 	pub bytes_written: u64,
 }
 
@@ -350,6 +351,7 @@ where
 			buf = &buf[written..];
 			written_total += written;
 			if !buf.is_empty() {
+				self.granule_position = (self.on_seal)(self.cur_packet.get_inner_data_size());
 				self.seal_packet(self.granule_position, false)?;
 			}
 		}
