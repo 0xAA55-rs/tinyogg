@@ -308,7 +308,7 @@ where
 		self.granule_position
 	}
 
-	pub fn set_to_end_of_stream(&mut self) {
+	pub fn mark_cur_packet_as_end_of_stream(&mut self) {
 		self.cur_packet.packet_type = OggPacketType::EndOfStream;
 	}
 
