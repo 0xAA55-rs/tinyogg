@@ -101,6 +101,11 @@ impl OggPacket {
 		ret
 	}
 
+	/// Get inner data size
+	pub fn get_inner_data_size(&self) -> usize {
+		self.segment_table.iter().map(|&s|s as usize).sum()
+	}
+
 	/// Read all of the data as a flattened `Vec<u8>`
 	pub fn get_inner_data(&self) -> Vec<u8> {
 		self.get_segments().into_iter().flatten().collect()
