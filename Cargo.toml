@@ -1,0 +1,13 @@
+[package]
+name = "ogg"
+version = "0.0.1"
+edition.workspace = true
+authors.workspace = true
+license-file.workspace = true
+repository.workspace = true
+
+[dependencies]
+
+[lib]
+name = "ogg"
+path = "src/ogg.rs"
