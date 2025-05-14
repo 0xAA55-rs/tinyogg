@@ -5,6 +5,8 @@ edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
 repository.workspace = true
+description = "A very simple Ogg packet serializer and deserializer and a stream for writing data and encapsulating the data into Ogg streams."
+keywords = ["ogg"]
 
 [dependencies]
 

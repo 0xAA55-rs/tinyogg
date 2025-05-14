@@ -277,12 +277,26 @@ impl Default for OggPacket {
 pub struct OggStreamWriter<W>
 where
 	W: Write + Debug {
+	/// * The writer, when a packet is full or you want to seal the packet, the packet is flushed in the writer
 	pub writer: W,
+
+	/// * The unique stream ID for a whole stream. Programs use the stream ID to identify which packet is for which stream.
 	pub stream_id: u32,
+
+	/// * The packet index.
 	pub packet_index: u32,
+
+	/// * The current packet, ready to be written.
 	pub cur_packet: OggPacket,
+
+	/// * The granule position is for the programmers to reference it for some purpose.
 	pub granule_position: u64,
+
+	/// * The `OggStreamWriter<W>` implements `Write`, when the `cur_packet` is full, the `on_seal()` closure will be called for updating the granule position.
+	/// * And then the packet will be flushed into the writer.
 	pub on_seal: Box<dyn FnMut(usize) -> u64>,
+
+	/// * How many bytes were written into this stream.
 	pub bytes_written: u64,
 }
 
@@ -301,26 +315,33 @@ where
 		}
 	}
 
+	/// * Set the granule position. This field of data is not used by the Ogg stream.
+	/// * The granule position is for the inner things to reference it for some purpose.
 	pub fn set_granule_position(&mut self, position: u64) {
 		self.granule_position = position
 	}
 
+	/// * Get the granule position you had set before
 	pub fn get_granule_position(&self) -> u64 {
 		self.granule_position
 	}
 
+	/// * Mark the current packet as EOS
 	pub fn mark_cur_packet_as_end_of_stream(&mut self) {
 		self.cur_packet.packet_type = OggPacketType::EndOfStream;
 	}
 
+	/// * Get how many bytes written in this stream
 	pub fn get_bytes_written(&self) -> u64 {
 		self.bytes_written
 	}
 
+	/// * Set a callback for the `Write` trait when it seals the packet, the callback helps with updating the granule position
 	pub fn set_on_seal_callback(&mut self, on_seal: Box<dyn FnMut(usize) -> u64>) {
 		self.on_seal = on_seal;
 	}
 
+	/// * Reset the stream state, discard the packet, reinit the packet to a BOS
 	pub fn reset(&mut self) {
 		self.packet_index = 0;
 		self.cur_packet = OggPacket::new(self.stream_id, OggPacketType::BeginOfStream, 0);
@@ -328,6 +349,7 @@ where
 		self.bytes_written = 0;
 	}
 
+	/// * Save the current packet and write it to the sink, then create a new packet for writing.
 	pub fn seal_packet(&mut self, granule_position: u64, is_end_of_stream: bool) -> io::Result<()> {
 		self.packet_index += 1;
 		self.granule_position = granule_position;
