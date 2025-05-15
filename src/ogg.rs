@@ -145,7 +145,7 @@ impl OggPacket {
         crc
 	}
 
-	pub fn get_checksum(ogg_packet: &[u8]) -> Result<u32, io::Error> {
+	pub fn get_checksum(ogg_packet: &[u8]) -> io::Result<u32> {
 		if ogg_packet.len() < 27 {
 			Err(io::Error::new(ErrorKind::InvalidData, format!("The given packet is too small: {} < 27", ogg_packet.len())))
 		} else {
@@ -202,7 +202,7 @@ impl OggPacket {
 	}
 
 	/// Deserialize the packet
-	pub fn from_bytes(ogg_packet: &[u8], packet_length: &mut usize) -> Result<Self, io::Error> {
+	pub fn from_bytes(ogg_packet: &[u8], packet_length: &mut usize) -> io::Result<Self> {
 		if ogg_packet.len() < 27 {
 			Err(io::Error::new(ErrorKind::UnexpectedEof, format!("The given ogg page size is too small: {} < 27", ogg_packet.len())))
 		} else if ogg_packet[0..4] != *b"OggS" {
