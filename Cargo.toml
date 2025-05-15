@@ -1,10 +1,11 @@
 [package]
 name = "tinyogg"
-version = "0.0.1"
+version = "0.0.2"
 edition.workspace = true
 authors.workspace = true
 license-file.workspace = true
 repository.workspace = true
+readme = "Readme.md"
 description = "A very simple Ogg packet serializer and deserializer and a stream for writing data and encapsulating the data into Ogg streams."
 keywords = ["ogg"]
 

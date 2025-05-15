@@ -4,8 +4,13 @@ use std::{io::{self, Cursor, Write, ErrorKind}, mem, fmt::{self, Debug, Formatte
 
 #[derive(Debug, Clone, Copy)]
 pub enum OggPacketType {
+	/// * The middle packets
 	Continuation = 0,
+
+	/// * The begin of a stream
 	BeginOfStream = 2,
+
+	/// * The last packet of a stream
 	EndOfStream = 4,
 }
 
