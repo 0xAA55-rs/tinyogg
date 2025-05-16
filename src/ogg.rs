@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-use std::{io::{self, Cursor, Write, ErrorKind}, mem, fmt::{self, Debug, Formatter}};
+use std::{io::{self, Read, Write, Cursor, ErrorKind}, mem, fmt::{self, Debug, Formatter}};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum OggPacketType {
 	/// * The middle packets
 	Continuation = 0,
@@ -278,7 +278,111 @@ impl Default for OggPacket {
 	}
 }
 
-/// * An ogg packet as a stream container
+/// * An ogg packet reader
+pub struct OggStreamReader<R>
+where
+	R: Read + Debug {
+	/// * The reader
+	pub reader: R,
+
+	/// * The unique stream ID, after read out the first packet, this field is set.
+	pub stream_id: u32,
+
+	/// * If an EOS is encountered, this field is set to true
+	e_o_s: bool,
+
+	/// * If encountered EOF, this field is set to true
+	e_o_f: bool,
+
+	/// * The cached bytes for next read
+	cached_bytes: Vec<u8>,
+}
+
+impl<R> OggStreamReader<R>
+where
+	R: Read + Debug {
+	const READ_SIZE: usize = 2048;
+
+	pub fn new(reader: R) -> Self {
+		Self {
+			reader,
+			stream_id: 0,
+			e_o_s: false,
+			e_o_f: false,
+			cached_bytes: Vec::new(),
+		}
+	}
+
+	fn safe_read(&mut self, target_len: usize) -> io::Result<Vec<u8>> {
+		let mut buf = vec![0u8; target_len];
+		let mut bytes_read = 0usize;
+		while bytes_read < target_len {
+			let read = match self.reader.read(&mut buf[bytes_read..]) {
+				Ok(0) => break,
+				Ok(size) => size,
+				Err(e) => match e.kind() {
+					io::ErrorKind::Interrupted => {
+						0
+					}
+					io::ErrorKind::UnexpectedEof => {
+						break;
+					}
+					_ => {
+						if bytes_read > 0 {
+							break;
+						} else {
+							return Err(e);
+						}
+					}
+				}
+			};
+			bytes_read += read;
+		}
+		buf.truncate(bytes_read);
+		Ok(buf)
+	}
+
+	pub fn get_packet(&mut self) -> io::Result<Option<OggPacket>> {
+		let mut packet_length = 0usize;
+		match OggPacket::from_bytes(&self.cached_bytes, &mut packet_length) {
+			Ok(packet) => {
+				if packet.packet_type == OggPacketType::EndOfStream {
+					self.e_o_s = true;
+				}
+				self.cached_bytes = self.cached_bytes[packet_length..].to_vec();
+				Ok(Some(packet))
+			}
+			Err(e) => match e.kind() {
+				io::ErrorKind::UnexpectedEof => { // Not enough bytes for an Ogg packet
+					let read = self.safe_read(Self::READ_SIZE)?;
+					self.cached_bytes.extend(&read);
+					if read.len() < Self::READ_SIZE {
+						if self.e_o_f == false {
+							self.e_o_f = true;
+							self.get_packet()
+						} else {
+							Err(e)
+						}
+					} else {
+						self.get_packet()
+					}
+				}
+				_ => Err(e)
+			}
+		}
+	}
+
+	pub fn is_eos(&self) -> bool {
+		self.e_o_s
+	}
+
+	pub fn is_eof(&self) -> bool {
+		self.e_o_f
+	}
+}
+
+
+/// * An ogg packets writer sink
 pub struct OggStreamWriter<W>
 where
 	W: Write + Debug {
