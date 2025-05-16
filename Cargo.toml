@@ -9,9 +9,6 @@ readme = "Readme.md"
 description = "A very simple Ogg packet serializer and deserializer and a stream for writing data and encapsulating the data into Ogg streams."
 keywords = ["ogg"]
 
-[profile.release]
-lto = "fat"
-
 [lib]
 name = "ogg"
 path = "src/ogg.rs"
