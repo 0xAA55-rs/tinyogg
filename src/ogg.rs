@@ -374,26 +374,38 @@ where
 		let mut packet_length = 0usize;
 		match OggPacket::from_bytes(&self.cached_bytes, &mut packet_length) {
 			Ok(packet) => {
-				if packet.packet_type == OggPacketType::EndOfStream {
-					self.e_o_s = true;
+				if !self.e_o_s {
+					if packet.packet_type == OggPacketType::EndOfStream {
+						self.e_o_s = true;
+					}
+					self.cached_bytes = self.cached_bytes[packet_length..].to_vec();
+					Ok(Some(packet))
+				} else {
+					Ok(None)
 				}
-				self.cached_bytes = self.cached_bytes[packet_length..].to_vec();
-				Ok(Some(packet))
 			}
 			Err(e) => match e.kind() {
 				io::ErrorKind::UnexpectedEof => { // Not enough bytes for an Ogg packet
-					let to_read = max(packet_length, Self::READ_SIZE);
-					let read = self.safe_read(to_read)?;
-					self.cached_bytes.extend(&read);
-					if read.len() < to_read {
-						if self.e_o_f == false {
-							self.e_o_f = true;
-							self.get_packet()
-						} else {
-							Err(e)
-						}
+					if self.e_o_s {
+						Ok(None)
 					} else {
-						self.get_packet()
+						let to_read = max(packet_length, Self::READ_SIZE);
+						let read = self.safe_read(to_read)?;
+						self.cached_bytes.extend(&read);
+						if read.len() < to_read {
+							if self.e_o_f == false {
+								self.e_o_f = true;
+								self.get_packet()
+							} else {
+								if read.len() == 0 {
+									Ok(None)
+								} else {
+									Err(e)
+								}
+							}
+						} else {
+							self.get_packet()
+						}
 					}
 				}
 				_ => Err(e)
