@@ -1,6 +1,11 @@
 #![allow(dead_code)]
 
-use std::{io::{self, Read, Write, Cursor, ErrorKind}, mem, fmt::{self, Debug, Formatter}};
+use std::{
+	cmp::max,
+	io::{self, Read, Write, Cursor, ErrorKind},
+	mem,
+	fmt::{self, Debug, Formatter}
+};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum OggPacketType {
