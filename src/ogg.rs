@@ -547,3 +547,14 @@ where
 	}
 }
 
+#[test]
+fn test_ogg() {
+	use std::{
+		fs::File,
+		io::BufReader,
+	};
+	let mut oggreader = OggStreamReader::new(BufReader::new(File::open("test.ogg").unwrap()));
+    let p1 = oggreader.get_packet().unwrap();
+    let p2 = oggreader.get_packet().unwrap();
+    let p3 = oggreader.get_packet().unwrap();
+}
