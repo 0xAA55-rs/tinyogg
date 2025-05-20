@@ -558,7 +558,12 @@ fn test_ogg() {
 		io::BufReader,
 	};
 	let mut oggreader = OggStreamReader::new(BufReader::new(File::open("test.ogg").unwrap()));
-    let p1 = oggreader.get_packet().unwrap();
-    let p2 = oggreader.get_packet().unwrap();
-    let p3 = oggreader.get_packet().unwrap();
+	loop {
+		let packet = oggreader.get_packet().unwrap();
+		if let Some(packet) = packet {
+			dbg!(packet);
+		} else {
+			break;
+		}
+	}
 }
