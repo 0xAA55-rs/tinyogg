@@ -228,6 +228,9 @@ impl OggPacket {
 			};
 			let num_segments = ogg_packet[26] as usize;
 			let data_start = 27 + num_segments;
+			if data_start > ogg_packet.len() {
+				return Err(io::Error::new(ErrorKind::UnexpectedEof, format!("The given data size is too small: {}", ogg_packet.len())));
+			}
 			let segment_table = &ogg_packet[27..data_start];
 			let data_length: usize = segment_table.iter().map(|&s|s as usize).sum();
 			*packet_length = data_start + data_length;
