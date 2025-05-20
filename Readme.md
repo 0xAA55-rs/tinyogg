@@ -1,10 +1,17 @@
 # Tiny Ogg stream manipulator
 
-Ogg is a stream capsulation, It's not just for Vorbis or Opus audio files, it can be used on everythings that's a stream or protocol for transmitting, etc.
+Ogg is a stream encapsulation format. It's not exclusively used for Vorbis or Opus audio files, but can encapsulate any type of continuous data streams for transmission protocols.
 
-Personally I think Ogg is a perfect binary data transmission protocol for UART/USART.
+Personally, I consider Ogg to be an excellent binary data transmission protocol for UART/USART applications.
 
 ## Overview
+
+### OggPacket
+* The `OggPacket` represents a single data packet, the fundamental unit of an Ogg stream.
+* Contains built-in capabilities for byte parsing and validation of complete packet structures.
+* Provides checksum verification and regeneration functionality for raw packet bytes.
+* Serves as a data container with capacity constraints (note: individual packets have size limitations).
+* Supports data serialization to raw bytes and payload extraction.
 
 The `OggPacket` have these functions:
 ```rust
@@ -16,14 +23,42 @@ fn get_inner_data_size(&self) -> usize;
 fn get_inner_data(&self) -> Vec<u8>;
 fn get_checksum(ogg_packet: &[u8]) -> io::Result<u32>;
 fn fill_checksum_field(ogg_packet: &mut [u8]) -> io::Result<()>;
+fn to_bytes(&self) -> Vec<u8>;
 fn into_bytes(self) -> Vec<u8>;
 fn get_length(ogg_packet: &[u8]) -> io::Result<usize>;
 fn from_bytes(ogg_packet: &[u8], packet_length: &mut usize) -> io::Result<Self>;
 fn from_cursor(cursor: &mut Cursor<Vec<u8>>) -> Vec<OggPacket>;
 ```
 
+### OggStreamReader
+* `OggStreamReader<R: Read + Debug>` provides sequential access to Ogg streams.
+* Initialize with any `Read` implementer (e.g., `File`, `BufReader`, `Cursor`)
+* Continuously call `get_packet()` to retrieve packets from all streams in the source.
+* Return values:
+	* `Ok(Some(packet))`: Valid packet retrieved
+	* `Ok(None)`: End of input reached
+	* `Err(io::Error)`: Error occurred
+
+The `OggStreamReader` have these functions:
+```rust
+fn new(reader: R) -> Self;
+fn get_packet(&mut self) -> io::Result<Option<OggPacket>>;
+fn is_eos(&self) -> bool;
+fn is_eof(&self) -> bool;
+```
+
+### OggStreamWriter
+* `OggStreamWriter<W: Write + Debug>` handles Ogg stream output
+* Initialize with any `Write` implementer (e.g., `File`, `BufWriter`, `Cursor`)
+* Implements `Write` trait with automatic packet management:
+	* Buffers data into packets
+	* Auto-seals and flushes full packets
+	* Customizable granule position calculation via `on_seal` callback
+* Manual packet sealing via `seal_packet()`
+
 The `OggStreamWriter` have these functions:
 ```rust
+fn new(writer: W, stream_id: u32) -> Self;
 fn set_granule_position(&mut self, position: u64);
 fn get_granule_position(&self) -> u64;
 fn mark_cur_packet_as_end_of_stream(&mut self);
@@ -33,7 +68,7 @@ fn reset(&mut self);
 fn seal_packet(&mut self, granule_position: u64, is_end_of_stream: bool) -> io::Result<()>;
 ```
 
-For more information about each function please read the documentations.
+## For more information about each function please read the documentations.
 
 ```rust
 #[derive(Debug, Clone, Copy)]
@@ -77,6 +112,26 @@ pub struct OggPacket {
 
 	/// * The data encapsulated in the Ogg Stream
 	pub data: Vec<u8>,
+}
+
+/// * An ogg packet reader
+pub struct OggStreamReader<R>
+where
+	R: Read + Debug {
+	/// * The reader
+	pub reader: R,
+
+	/// * The unique stream ID, after read out the first packet, this field is set.
+	pub stream_id: u32,
+
+	/// * If an EOS is encountered, this field is set to true
+	e_o_s: bool,
+
+	/// * If encountered EOF, this field is set to true
+	e_o_f: bool,
+
+	/// * The cached bytes for next read
+	cached_bytes: Vec<u8>,
 }
 
 /// * An ogg packet as a stream container
