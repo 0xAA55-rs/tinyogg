@@ -20,7 +20,7 @@ pub enum OggPacketType {
 }
 
 /// * An ogg packet as a stream container
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct OggPacket {
 	/// Ogg Version must be zero
 	pub version: u8,
@@ -270,6 +270,21 @@ impl OggPacket {
 		}
 		cursor.set_position(bytes_read as u64);
 		ret
+	}
+}
+
+impl Debug for OggPacket {
+	fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+		f.debug_struct("OggPacket")
+		.field("version", &self.version)
+		.field("packet_type", &self.packet_type)
+		.field("granule_position", &self.granule_position)
+		.field("stream_id", &self.stream_id)
+		.field("packet_index", &self.packet_index)
+		.field("checksum", &format_args!("0x{:08x}", self.checksum))
+		.field("segment_table", &self.segment_table)
+		.field("data", &format_args!("[u8; {}]", self.data.len()))
+		.finish()
 	}
 }
 
