@@ -382,9 +382,10 @@ where
 			}
 			Err(e) => match e.kind() {
 				io::ErrorKind::UnexpectedEof => { // Not enough bytes for an Ogg packet
-					let read = self.safe_read(Self::READ_SIZE)?;
+					let to_read = max(packet_length, Self::READ_SIZE);
+					let read = self.safe_read(to_read)?;
 					self.cached_bytes.extend(&read);
-					if read.len() < Self::READ_SIZE {
+					if read.len() < to_read {
 						if self.e_o_f == false {
 							self.e_o_f = true;
 							self.get_packet()
