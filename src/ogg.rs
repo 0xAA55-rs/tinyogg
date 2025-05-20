@@ -374,15 +374,13 @@ where
 		let mut packet_length = 0usize;
 		match OggPacket::from_bytes(&self.cached_bytes, &mut packet_length) {
 			Ok(packet) => {
-				if !self.e_o_s {
-					if packet.packet_type == OggPacketType::EndOfStream {
-						self.e_o_s = true;
-					}
-					self.cached_bytes = self.cached_bytes[packet_length..].to_vec();
-					Ok(Some(packet))
+				if packet.packet_type == OggPacketType::EndOfStream {
+					self.e_o_s = true;
 				} else {
-					Ok(None)
+					self.e_o_s = false;
 				}
+				self.cached_bytes = self.cached_bytes[packet_length..].to_vec();
+				Ok(Some(packet))
 			}
 			Err(e) => match e.kind() {
 				io::ErrorKind::UnexpectedEof => { // Not enough bytes for an Ogg packet
